@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Test Widget</title>
+<script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
+</head>
+<body style="font-family: Arial; padding: 30px; text-align: center;">
+<h2>Widget Loaded Successfully</h2>
+<p id="status">Waiting for PageLoad event...</p>
+<script>
+document.getElementById("status").innerText = "Script is running.";
+ZOHO.embeddedApp.on("PageLoad", function(data){
+    document.getElementById("status").innerText = "PageLoad fired! Deal ID: " + data.EntityId;
+});
+ZOHO.embeddedApp.init();
+</script>
+</body>
+</html>
