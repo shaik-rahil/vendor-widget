@@ -46,21 +46,19 @@ ZOHO.embeddedApp.on("PageLoad", function(data){
 ZOHO.embeddedApp.init();
 
 function fetchVendors(){
-    ZOHO.CRM.FUNCTIONS.execute("getVendorsForEnquiry", { "arguments": { "dealId": dealId } })
+    // ✅ Fix 1: Correct API name (getvendorsforenquiry1)
+    // ✅ Fix 2: arguments must be JSON.stringify'd
+    ZOHO.CRM.FUNCTIONS.execute("getvendorsforenquiry1", {
+        "arguments": JSON.stringify({ "dealId": dealId })
+    })
     .then(function(resp){
-        // DEBUG: show the full raw response so we can see its real structure
-        document.getElementById("vendorContainer").innerHTML =
-            "<div class='empty-state' style='text-align:left; white-space:pre-wrap; font-family:monospace; font-size:11px;'>" +
-            JSON.stringify(resp, null, 2) +
-            "</div>";
-        return;
-
         var raw = resp.details.output;
         var parsed;
         try {
             parsed = JSON.parse(raw);
         } catch(e) {
-            document.getElementById("vendorContainer").innerHTML = "<div class='empty-state'>Error parsing vendor data: " + raw + "</div>";
+            document.getElementById("vendorContainer").innerHTML =
+                "<div class='empty-state'>Error parsing vendor data: " + raw + "</div>";
             return;
         }
 
@@ -70,12 +68,15 @@ function fetchVendors(){
         }
 
         document.getElementById("subtext").innerText =
-            "Deal Type: " + parsed.dealType + " | Destinations checked: " + parsed.destinationsChecked + " | " + parsed.vendorCount + " vendor(s) found";
+            "Deal Type: " + parsed.dealType +
+            " | Destinations checked: " + parsed.destinationsChecked +
+            " | " + parsed.vendorCount + " vendor(s) found";
 
         renderVendors(parsed.vendors);
     })
     .catch(function(err){
-        document.getElementById("vendorContainer").innerHTML = "<div class='empty-state'>Failed to load vendors. " + JSON.stringify(err) + "</div>";
+        document.getElementById("vendorContainer").innerHTML =
+            "<div class='empty-state'>Failed to load vendors. " + JSON.stringify(err) + "</div>";
     });
 }
 
@@ -84,7 +85,8 @@ function renderVendors(vendors){
     container.innerHTML = "";
 
     if(!vendors || vendors.length === 0){
-        container.innerHTML = "<div class='empty-state'>No matching vendors found for this Deal Type / Destination.</div>";
+        container.innerHTML =
+            "<div class='empty-state'>No matching vendors found for this Deal Type / Destination.</div>";
         return;
     }
 
