@@ -41,16 +41,9 @@ var selectedIds = {};
 ZOHO.embeddedApp.on("PageLoad", function(data){
     dealId = data.EntityId;
 
-    // TEMP DEBUG: show exactly what we receive
-    document.getElementById("subtext").innerText =
-        "EntityId: " + dealId + " | Entity: " + data.Entity;
-
     if(!dealId || dealId === "null" || dealId === "undefined"){
         document.getElementById("vendorContainer").innerHTML =
-            "<div class='empty-state' style='text-align:left;'>" +
-            "No Deal ID found. Full data received: <br><pre>" +
-            JSON.stringify(data, null, 2) +
-            "</pre></div>";
+            "<div class='empty-state'>No Deal ID found. Please try opening the widget again.</div>";
         return;
     }
 
@@ -64,13 +57,6 @@ function fetchVendors(){
         "arguments": JSON.stringify({ "dealId": String(dealId) })
     })
     .then(function(resp){
-        // TEMP DEBUG: show full raw response
-        document.getElementById("vendorContainer").innerHTML =
-            "<pre style='font-size:10px; text-align:left; white-space:pre-wrap; word-break:break-all;'>" +
-            JSON.stringify(resp, null, 2) +
-            "</pre>";
-        return;
-
         var raw = resp.details.output;
         var parsed;
         try {
