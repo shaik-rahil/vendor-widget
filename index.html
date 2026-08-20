@@ -61,7 +61,7 @@ ZOHO.embeddedApp.init();
 
 function fetchVendors(){
     ZOHO.CRM.FUNCTIONS.execute("getvendorsforenquiry1", {
-        "arguments": JSON.stringify({ "dealId": dealId })
+        "arguments": JSON.stringify({ "dealId": String(dealId) })
     })
     .then(function(resp){
         // TEMP DEBUG: show full raw response
