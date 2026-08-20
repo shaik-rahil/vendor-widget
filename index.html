@@ -2,18 +2,126 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Test Widget</title>
+<title>Select Vendors</title>
 <script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 16px; background: #f9f9fb; }
+  h3 { margin: 0 0 4px 0; font-size: 16px; }
+  .subtext { color: #666; font-size: 12px; margin-bottom: 14px; }
+  .vendor-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 6px;
+    margin-bottom: 8px; background: #fff;
+  }
+  .vendor-left { display: flex; align-items: center; gap: 10px; }
+  .vendor-name { font-weight: 600; font-size: 14px; }
+  .vendor-rating { font-size: 12px; color: #ff9800; }
+  .empty-state { color: #888; font-size: 13px; padding: 20px 0; text-align: center; }
+  .footer { margin-top: 16px; display: flex; justify-content: flex-end; gap: 10px; }
+  button { padding: 8px 18px; border-radius: 5px; border: none; cursor: pointer; font-size: 13px; }
+  .btn-confirm { background: #1a73e8; color: #fff; }
+  .btn-cancel { background: #eee; color: #333; }
+</style>
 </head>
-<body style="font-family: Arial; padding: 30px; text-align: center;">
-<h2>Widget Loaded Successfully</h2>
-<p id="status">Waiting for PageLoad event...</p>
+<body>
+
+<h3>Select Vendors</h3>
+<div class="subtext" id="subtext">Loading eligible vendors...</div>
+<div id="vendorContainer"></div>
+
+<div class="footer">
+  <button class="btn-cancel" onclick="closeWidget()">Cancel</button>
+  <button class="btn-confirm" onclick="confirmSelection()">Confirm Selection</button>
+</div>
+
 <script>
-document.getElementById("status").innerText = "Script is running.";
+var dealId = null;
+var selectedIds = {};
+
 ZOHO.embeddedApp.on("PageLoad", function(data){
-    document.getElementById("status").innerText = "PageLoad fired! Deal ID: " + data.EntityId;
+    dealId = data.EntityId;
+    fetchVendors();
 });
+
 ZOHO.embeddedApp.init();
+
+function fetchVendors(){
+    ZOHO.CRM.FUNCTIONS.execute("getVendorsForEnquiry", { "arguments": { "dealId": dealId } })
+    .then(function(resp){
+        var raw = resp.details.output;
+        var parsed;
+        try {
+            parsed = JSON.parse(raw);
+        } catch(e) {
+            document.getElementById("vendorContainer").innerHTML = "<div class='empty-state'>Error parsing vendor data: " + raw + "</div>";
+            return;
+        }
+
+        if(parsed.error){
+            document.getElementById("subtext").innerText = parsed.error;
+            return;
+        }
+
+        document.getElementById("subtext").innerText =
+            "Deal Type: " + parsed.dealType + " | Destinations checked: " + parsed.destinationsChecked + " | " + parsed.vendorCount + " vendor(s) found";
+
+        renderVendors(parsed.vendors);
+    })
+    .catch(function(err){
+        document.getElementById("vendorContainer").innerHTML = "<div class='empty-state'>Failed to load vendors. " + JSON.stringify(err) + "</div>";
+    });
+}
+
+function renderVendors(vendors){
+    var container = document.getElementById("vendorContainer");
+    container.innerHTML = "";
+
+    if(!vendors || vendors.length === 0){
+        container.innerHTML = "<div class='empty-state'>No matching vendors found for this Deal Type / Destination.</div>";
+        return;
+    }
+
+    vendors.forEach(function(v){
+        var row = document.createElement("div");
+        row.className = "vendor-row";
+        row.innerHTML =
+            "<div class='vendor-left'>" +
+                "<input type='checkbox' data-id='" + v.id + "' onchange='toggleVendor(this)'>" +
+                "<div><div class='vendor-name'>" + v.name + "</div>" +
+                "<div class='vendor-rating'>\u2605 " + (v.rating || 0) + "</div></div>" +
+            "</div>";
+        container.appendChild(row);
+    });
+}
+
+function toggleVendor(checkbox){
+    var id = checkbox.getAttribute("data-id");
+    if(checkbox.checked){ selectedIds[id] = true; } else { delete selectedIds[id]; }
+}
+
+function confirmSelection(){
+    var idArray = Object.keys(selectedIds);
+    if(idArray.length === 0){
+        alert("Select at least one vendor, or click Cancel.");
+        return;
+    }
+    var lookupPayload = idArray.map(function(id){ return { "id": id }; });
+
+    ZOHO.CRM.API.updateRecord({
+        Entity: "Deals",
+        APIData: { id: dealId, Multi_select_vendor_lookup: lookupPayload },
+        Trigger: ["workflow"]
+    }).then(function(resp){
+        ZOHO.CRM.UI.Popup.closeReload();
+    }).catch(function(err){
+        alert("Failed to save vendor selection: " + JSON.stringify(err));
+    });
+}
+
+function closeWidget(){
+    ZOHO.CRM.UI.Popup.close();
+}
 </script>
+
 </body>
 </html>
