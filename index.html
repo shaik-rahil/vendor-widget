@@ -40,25 +40,37 @@ var selectedIds = {};
 
 ZOHO.embeddedApp.on("PageLoad", function(data){
     dealId = data.EntityId;
+
+    // TEMP DEBUG: show exactly what we receive
+    document.getElementById("subtext").innerText =
+        "EntityId: " + dealId + " | Entity: " + data.Entity;
+
+    if(!dealId || dealId === "null" || dealId === "undefined"){
+        document.getElementById("vendorContainer").innerHTML =
+            "<div class='empty-state' style='text-align:left;'>" +
+            "No Deal ID found. Full data received: <br><pre>" +
+            JSON.stringify(data, null, 2) +
+            "</pre></div>";
+        return;
+    }
+
     fetchVendors();
 });
 
 ZOHO.embeddedApp.init();
 
 function fetchVendors(){
-    // ✅ Fix 1: Correct API name (getvendorsforenquiry1)
-    // ✅ Fix 2: arguments must be JSON.stringify'd
     ZOHO.CRM.FUNCTIONS.execute("getvendorsforenquiry1", {
         "arguments": JSON.stringify({ "dealId": dealId })
     })
-  .then(function(resp){
-    // TEMP: Show full raw response to find correct path
-    document.getElementById("vendorContainer").innerHTML =
-        "<pre style='font-size:10px; text-align:left; white-space:pre-wrap; word-break:break-all;'>" +
-        JSON.stringify(resp, null, 2) +
-        "</pre>";
-    return; // remove this return after debugging
-   
+    .then(function(resp){
+        // TEMP DEBUG: show full raw response
+        document.getElementById("vendorContainer").innerHTML =
+            "<pre style='font-size:10px; text-align:left; white-space:pre-wrap; word-break:break-all;'>" +
+            JSON.stringify(resp, null, 2) +
+            "</pre>";
+        return;
+
         var raw = resp.details.output;
         var parsed;
         try {
