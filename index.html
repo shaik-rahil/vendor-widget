@@ -51,7 +51,14 @@ function fetchVendors(){
     ZOHO.CRM.FUNCTIONS.execute("getvendorsforenquiry1", {
         "arguments": JSON.stringify({ "dealId": dealId })
     })
-    .then(function(resp){
+  .then(function(resp){
+    // TEMP: Show full raw response to find correct path
+    document.getElementById("vendorContainer").innerHTML =
+        "<pre style='font-size:10px; text-align:left; white-space:pre-wrap; word-break:break-all;'>" +
+        JSON.stringify(resp, null, 2) +
+        "</pre>";
+    return; // remove this return after debugging
+   
         var raw = resp.details.output;
         var parsed;
         try {
