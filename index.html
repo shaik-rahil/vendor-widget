@@ -119,11 +119,14 @@ function confirmSelection(){
         alert("Select at least one vendor, or click Cancel.");
         return;
     }
-    var lookupPayload = idArray.map(function(id){ return { "id": id }; });
 
+    // ✅ Flat array of string IDs passed directly to Multi-select lookup
     ZOHO.CRM.API.updateRecord({
         Entity: "Deals",
-        APIData: { id: dealId, Multi_select_vendor_lookup: lookupPayload },
+        APIData: { 
+            id: dealId, 
+            Multi_select_vendor_lookup: idArray 
+        },
         Trigger: ["workflow"]
     }).then(function(resp){
         ZOHO.CRM.UI.Popup.closeReload();
