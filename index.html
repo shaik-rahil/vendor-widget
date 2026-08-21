@@ -111,6 +111,7 @@ function renderVendors(vendors){
     });
 }
 
+// Keep track of checkmarks
 function toggleVendor(checkbox){
     var id = checkbox.getAttribute("data-id");
     if(checkbox.checked){ selectedIds[id] = true; } else { delete selectedIds[id]; }
@@ -123,11 +124,14 @@ function confirmSelection(){
         return;
     }
 
+    // ✅ Sends the nested payload to make sure Zoho maps it to the single "dealId" parameter
     ZOHO.CRM.FUNCTIONS.execute("getvendorsforenquiry1", {
         "arguments": JSON.stringify({ 
-            "dealId": String(dealId),
-            "action": "save",
-            "selectedVendorIds": idArray.join(",")
+            "dealId": JSON.stringify({
+                "dealId": String(dealId),
+                "action": "save",
+                "selectedVendorIds": idArray.join(",")
+            })
         })
     }).then(function(resp){
         var raw = resp.details.output;
@@ -135,7 +139,6 @@ function confirmSelection(){
         try {
             parsed = JSON.parse(raw);
         } catch(e) {
-            // ✅ Parse fails (e.g. Zoho execution error)
             alert("Failed to execute save: " + JSON.stringify(resp));
             return;
         }
@@ -143,7 +146,6 @@ function confirmSelection(){
         if(parsed.status === "success"){
             ZOHO.CRM.UI.Popup.closeReload();
         } else {
-            // ✅ If parsed.error doesn't exist, show the entire response object
             var errMsg = parsed.error || JSON.stringify(parsed);
             alert("Failed to save vendor selection: " + errMsg);
         }
