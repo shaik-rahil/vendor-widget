@@ -56,7 +56,7 @@ function fetchVendors(){
     ZOHO.CRM.FUNCTIONS.execute("getvendorsforenquiry1", {
         "arguments": JSON.stringify({ 
             "dealId": String(dealId),
-            "action": "get" // Fetch action
+            "action": "get"
         })
     })
     .then(function(resp){
@@ -123,12 +123,11 @@ function confirmSelection(){
         return;
     }
 
-    // ✅ Run the "save" action through the Deluge function to safely update the Deal
     ZOHO.CRM.FUNCTIONS.execute("getvendorsforenquiry1", {
         "arguments": JSON.stringify({ 
             "dealId": String(dealId),
             "action": "save",
-            "selectedVendorIds": idArray.join(",") // Comma-separated string of IDs
+            "selectedVendorIds": idArray.join(",")
         })
     }).then(function(resp){
         var raw = resp.details.output;
@@ -136,14 +135,17 @@ function confirmSelection(){
         try {
             parsed = JSON.parse(raw);
         } catch(e) {
-            alert("Failed to parse save response: " + raw);
+            // ✅ Parse fails (e.g. Zoho execution error)
+            alert("Failed to execute save: " + JSON.stringify(resp));
             return;
         }
 
         if(parsed.status === "success"){
             ZOHO.CRM.UI.Popup.closeReload();
         } else {
-            alert("Failed to save vendor selection: " + parsed.error);
+            // ✅ If parsed.error doesn't exist, show the entire response object
+            var errMsg = parsed.error || JSON.stringify(parsed);
+            alert("Failed to save vendor selection: " + errMsg);
         }
     }).catch(function(err){
         alert("Failed to execute save: " + JSON.stringify(err));
