@@ -111,7 +111,6 @@ function renderVendors(vendors){
     });
 }
 
-// Keep track of checkmarks
 function toggleVendor(checkbox){
     var id = checkbox.getAttribute("data-id");
     if(checkbox.checked){ selectedIds[id] = true; } else { delete selectedIds[id]; }
@@ -124,14 +123,12 @@ function confirmSelection(){
         return;
     }
 
-    // ✅ Sends the nested payload to make sure Zoho maps it to the single "dealId" parameter
+    // ✅ Flat arguments list matching the updated function signature
     ZOHO.CRM.FUNCTIONS.execute("getvendorsforenquiry1", {
         "arguments": JSON.stringify({ 
-            "dealId": JSON.stringify({
-                "dealId": String(dealId),
-                "action": "save",
-                "selectedVendorIds": idArray.join(",")
-            })
+            "dealId": String(dealId),
+            "action": "save",
+            "selectedVendorIds": idArray.join(",")
         })
     }).then(function(resp){
         var raw = resp.details.output;
