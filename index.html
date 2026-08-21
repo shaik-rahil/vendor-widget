@@ -54,7 +54,10 @@ ZOHO.embeddedApp.init();
 
 function fetchVendors(){
     ZOHO.CRM.FUNCTIONS.execute("getvendorsforenquiry1", {
-        "arguments": JSON.stringify({ "dealId": String(dealId) })
+        "arguments": JSON.stringify({ 
+            "dealId": String(dealId),
+            "action": "get" // Fetch action
+        })
     })
     .then(function(resp){
         var raw = resp.details.output;
@@ -120,18 +123,30 @@ function confirmSelection(){
         return;
     }
 
-    // ✅ Flat array of string IDs passed directly to Multi-select lookup
-    ZOHO.CRM.API.updateRecord({
-        Entity: "Deals",
-        APIData: { 
-            id: dealId, 
-            Multi_select_vendor_lookup: idArray 
-        },
-        Trigger: ["workflow"]
+    // ✅ Run the "save" action through the Deluge function to safely update the Deal
+    ZOHO.CRM.FUNCTIONS.execute("getvendorsforenquiry1", {
+        "arguments": JSON.stringify({ 
+            "dealId": String(dealId),
+            "action": "save",
+            "selectedVendorIds": idArray.join(",") // Comma-separated string of IDs
+        })
     }).then(function(resp){
-        ZOHO.CRM.UI.Popup.closeReload();
+        var raw = resp.details.output;
+        var parsed;
+        try {
+            parsed = JSON.parse(raw);
+        } catch(e) {
+            alert("Failed to parse save response: " + raw);
+            return;
+        }
+
+        if(parsed.status === "success"){
+            ZOHO.CRM.UI.Popup.closeReload();
+        } else {
+            alert("Failed to save vendor selection: " + parsed.error);
+        }
     }).catch(function(err){
-        alert("Failed to save vendor selection: " + JSON.stringify(err));
+        alert("Failed to execute save: " + JSON.stringify(err));
     });
 }
 
