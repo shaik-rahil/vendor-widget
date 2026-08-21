@@ -141,8 +141,9 @@ function confirmSelection(){
         }
 
         if(parsed.status === "success"){
-            ZOHO.CRM.UI.Popup.closeReload();
-        } else {
+    alert("Success! Links created: " + parsed.linksCreated);
+    ZOHO.CRM.UI.Popup.closeReload();
+} else {
             var errMsg = parsed.error || JSON.stringify(parsed);
             alert("Failed to save vendor selection: " + errMsg);
         }
